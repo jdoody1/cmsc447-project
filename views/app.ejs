@@ -80,7 +80,10 @@
                                         <b>State:&nbsp;</b>
                                         <select class = "browser-default custom-select select-menu" id = "stateSelectMenu" onchange = "stateToCounties(this.value)">
                                             <option value = "00">Select a State:</option>
-                                            <option value = "24">Maryland</option>
+                                            <!--
+                                            <option value = "MD">Maryland</option>
+                                            <option value = "MA">Massachusetts</option>
+                                            -->
                                         </select>
                                     </form>
                                 </div>
@@ -104,9 +107,8 @@
                                 <div class = "col-xl-3">
                                     <form style = "white-space: nowrap; width: 50%;">
                                         <b>Date of Data:&nbsp;</b>
-                                        <select class = "browser-default custom-select select-menu2" id = "dateOfDataMenu" onchange = "datesOfData(this.value)">
-                                            <option value = "000">Today (YYYY-MM-DD)</option>
-                                        </select>
+                                        <input type = "date" id = "dateOfDataMenu" value = "" min = "" max = "" onchange = "showCountyData(countySelectMenu.value)" required> 
+                                        <!--min = "2020-03-23" max = "2021-11-17"-->
                                     </form>
                                 </div>
                                 <div class = "col-xl-2">
@@ -210,7 +212,7 @@
                                 New features
                             </h2>
                             <p style = "color: dimgray;">
-                                October 22, 2021 <br>
+                                November 22, 2021 <br>
                                 12:08 PM EDT <br>
                                 Written by
                                 <a class = "popup" onclick = "showPopUp('infoPopup')" style = "color: #007bff;">
@@ -254,8 +256,8 @@
                             <h2 class = "tnrTitle" style = "font-family: Georgia, 'Times New Roman', Times, serif;">
                                 Maintenance
                             </h2>
-                            <p style = "color: #999;">
-                                October 21, 2021 <br>
+                            <p style = "color: dimgray;">
+                                November 21, 2021 <br>
                                 1:23 PM EDT <br>
                                 Written by
                                 <a class = "popup" onclick = "showPopUp('infoPopup2')" style = "color: #007bff;">
@@ -268,7 +270,7 @@
                                 </a>
                             </p>
                             <p>
-                                Our services will be<mark>down for maintenance on October 28 from 4:00 PM EDT to 7:00 PM EDT.</mark>Thank you for your patience!
+                                Our services will be<mark>down for maintenance on December 8 from 4:00 PM EDT to 7:00 PM EDT.</mark>Thank you for your patience!
                                 <br>
                                 Here are some things to note when this site is under maintenance.
                             </p>
@@ -301,7 +303,7 @@
                                 Important Notice
                             </h4>
                             <h6 class = "mb-0 font-italic">
-                                All data provided by this website, updates weekly by 10:00 PM EDT.
+                                All data provided by this website is updated weekly every Sunday by 10:00 PM EDT.
                                 <br>
                                 Data displayed on this site has been manually approved by the administrators of this website. 
                             </h6>
