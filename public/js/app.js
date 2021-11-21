@@ -2,12 +2,31 @@ $(document).ready(function() {
     $("div.specialPage").css("display", "none");
     $("div.homePage").css("display", "");
     resetFunction();
+
+    for (var i = 0; i < countiesData.features.length; i++) {
+        if ($("#stateSelectMenu option[value = '" + countiesData.features.at(i)["properties"]["INITIALS"] + "']").length > 0) {}
+
+        else {
+            stateSelectMenu.innerHTML += "<option value = '" + countiesData.features.at(i)["properties"]["INITIALS"] 
+            + "'>" + countiesData.features.at(i)["properties"]["STATE"] + "</option>";
+        }
+
+        states.push({
+            key:   countiesData.features.at(i)["properties"]["ID"],
+            value: countiesData.features.at(i)["properties"]["INITIALS"]
+        });
+    }
+
+    states = [...new Map(states.map(item => [JSON.stringify(item), item])).values()];
 });
 
 var pages = {1:"homePage", 2:"newsPage", 3:"settingsPage", 4:"aboutPage", 5:"helpPage", 6:"privPolPage", 7:"tosPage", 8:"tosPage"};
+var states = [];
+var dates = [];
+var mapData = "";
 var allPages = document.getElementsByClassName("specialPage");
 var countyName = document.getElementById("countyName");
-var stateName = document.getElementById("stateName");
+var stateName = document.getElementById("stateName"); 
 var countyFIPSCode = document.getElementById("countyFIPSCode");
 var stateSelectMenu = document.getElementById("stateSelectMenu");
 var countyMenu = document.getElementById("countySelectMenu");
@@ -17,6 +36,12 @@ var vaccinationRateForCounty = document.getElementById("vaccinationRate");
 var numOfCasesForCounty = document.getElementById("casesNum");
 var numOfDeathsForCounty = document.getElementById("deathsNum");
 var mapColorNum = 0;
+
+async function getJson(url) {
+    let response = await fetch(url);
+    let data = await response.json()
+    return data;
+}
 
 function revealPage(x) {
     for (var i = 0; i < allPages.length; i++) {
@@ -84,7 +109,10 @@ function stateToCounties(str) {
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
         vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
         countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
-        dateOfDataMenu.innerHTML = "<option value = '000'>Today (YYYY-MM-DD)</option>";
+        dateOfDataMenu.disabled = true;
+        dateOfDataMenu.value = "";
+        dateOfDataMenu.min = "";
+        dateOfDataMenu.max = "";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
         return;
@@ -92,23 +120,67 @@ function stateToCounties(str) {
     
     else {
         countyName.innerHTML = "County Name: N/A";
-        stateName.innerHTML = "State Name or Initials: Maryland (MD)";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
         vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
-        fetch('http://localhost:3000/getData')
+        fetch(`http://localhost:3000/getData_${str}`)
         .then(response => response.json())
         .then(data => populateCountySelectMenu(data['data']));
         return;
     }
 }
 
+function printFips(stateID, countyID) {
+    if (stateID < 10) {
+        stateID = '0' + stateID;
+    }
+
+    if (countyID < 10) {
+        return stateID + '00' + countyID;
+    }
+
+    else if (countyID > 10 && countyID < 100) {
+        return stateID + '0' + countyID;
+    }
+
+    else if (countyID > 99) {
+        return stateID + countyID;
+    }   
+}
+
+function printCountyName(countyName) {
+    var modifiedCountyName = countyName.replace(/_/g," ");
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 4) == "City") {
+        return modifiedCountyName;
+    }
+
+    else {
+        return modifiedCountyName + " County";
+    }
+}
+
 function populateCountySelectMenu(data) {
-    data.forEach(function ({id, name, infRate, vacRate}) {
-        countyMenu.innerHTML += `<option value = "${id}">${name}</option>`;
+    countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
+    dates = [];
+
+    data.forEach(function ({state_ID, state_name, state_init, county_ID, county_name, dt}) {
+        dates.push(`${dt}`);
+
+        if ($("#countySelectMenu option[value = '" + printFips(`${state_ID}`, `${county_ID}`) + "']").length > 0) {}
+
+        else {
+            stateName.innerHTML = "State Name or Initials: " + `${state_name}` + " (" + `${state_init}` + ")"; 
+            countyMenu.innerHTML += "<option value = '" + printFips(`${state_ID}`, `${county_ID}`) + "'>" + printCountyName(`${county_name}`) + "</option>";
+        }
     });
+
+    dateOfDataMenu.disabled = false;
+    dateOfDataMenu.min = dates[0].substring(0, 10);
+    dateOfDataMenu.max = dates.at(-1).substring(0, 10);
+    dateOfDataMenu.value = dates.at(-1).substring(0, 10);
 }
 
 function showCountyData(str) {
@@ -123,14 +195,15 @@ function showCountyData(str) {
     } 
     
     else {
-        fetch('http://localhost:3000/getData')
-        .then(response => response.json())
-        .then(data => loadData(str, data['data']));
+        let x = str.substring(0, 2);
+        $.each(states, function(k, v) {
+            if (states[k].key == x) {
+                fetch(`http://localhost:3000/getData_${states[k].value}`)
+                .then(response => response.json())
+                .then(data => loadData(str, data['data']));
+            }
+        });
     }
-}
-
-function datesOfData(val) {
-    dateOfDataMenu.innerHTML = "<option value = '000'>Today (YYYY-MM-DD)</option>";
 }
 
 function resetFunction() {
@@ -141,6 +214,11 @@ function resetFunction() {
     vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
     document.getElementById("stateSelectMenu").value = "00";
     countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
+    dateOfDataMenu.disabled = true;
+    dateOfDataMenu.value = "";
+    dateOfDataMenu.min = "";
+    dateOfDataMenu.max = "";
+    dates = [];
     document.getElementById("typeOfMapMenu").value = "0";
     changeMapType("0");
     numOfCasesForCounty.innerHTML = "N/A";
@@ -148,15 +226,15 @@ function resetFunction() {
 }
 
 function loadData(str, data) {
-    data.forEach(function ({id, name, infRate, vacRate}) {
-        if (str == `${id}`) {
-            countyName.innerHTML = "County Name: " + `${name}`;
-            stateName.innerHTML = "State Name or Initials: Maryland (MD)";
-            countyFIPSCode.innerHTML = "County FIPS code: " + `${id}`;
-            infectionRateForCounty.innerHTML = "Infection Rate: <b>" + `${infRate}` + "%</b>";
-            vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>" + `${vacRate}` + "%</b>";
-            numOfCasesForCounty.innerHTML = getCasesAndDeaths(0, `${name}`);
-            numOfDeathsForCounty.innerHTML = getCasesAndDeaths(1, `${name}`);
+    data.forEach(function ({state_ID, state_name, state_init, county_ID, county_name, county_infection_rate, county_vaccination_rate, cases, confirmed_deaths, dt}) {
+        if ((str == printFips(`${state_ID}`, `${county_ID}`)) && (dateOfDataMenu.value == (`${dt}`.substring(0, 10)))) {
+            countyName.innerHTML = "County Name: " + printCountyName(`${county_name}`);
+            stateName.innerHTML = "State Name or Initials: " + `${state_name}` + " (" + `${state_init}` + ")";
+            countyFIPSCode.innerHTML = "County FIPS code: " + printFips(`${state_ID}`, `${county_ID}`);
+            infectionRateForCounty.innerHTML = "Infection Rate: <b>" + `${county_infection_rate}` + "%</b>";
+            vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>" + `${county_vaccination_rate}` + "%</b>";
+            numOfCasesForCounty.innerHTML = `${cases}`;
+            numOfDeathsForCounty.innerHTML = `${confirmed_deaths}`;
         }
     });
 }
@@ -258,7 +336,8 @@ var vaccinationRateChart = new Chart(getVaccinationRateChart, {
 ===================================================*/
 
 // For all counties, replace below line with: var map = L.map('map').setView([39.7128,-94.0060], 4.3);
-var map = L.map('map').setView([39, -77.0060], 8); //For MD only
+//For MD only, replace below line with: var map = L.map('map').setView([39, -77.0060], 8);
+var map = L.map('map').setView([40.5, -75.0060], 7);
 
 var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href = "https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -335,7 +414,7 @@ function getColorForDeaths(d) {
 
 function styleCases(feature) {
     return {
-        fillColor: getColorForCases(getCasesAndDeaths(0, (feature.properties.NAME + "_" + feature.properties.LSAD))),
+        fillColor: getColorForCases(getCasesAndDeaths(0, (feature.properties.NAME + "_" + feature.properties.LSAD), feature.properties.INITIALS)),
         weight: 2,
         opacity: 1,
         color: 'white',
@@ -346,7 +425,7 @@ function styleCases(feature) {
 
 function styleDeaths(feature) {
     return {
-        fillColor: getColorForDeaths(getCasesAndDeaths(1, (feature.properties.NAME + "_" + feature.properties.LSAD))),
+        fillColor: getColorForDeaths(getCasesAndDeaths(1, (feature.properties.NAME + "_" + feature.properties.LSAD), feature.properties.INITIALS)),
         weight: 2,
         opacity: 1,
         color: 'white',
@@ -411,19 +490,22 @@ info.onAdd = function (map) {
 info.update = function (props) {
     if (mapColorNum == 0) {
         this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Cases by County</h5>" +  (props ?
-            '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + getCasesAndDeaths(0, (props.NAME + "_" + props.LSAD)) + ' confirmed cases per 100k'
+            '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + getCasesAndDeaths(0, (props.NAME + "_" + props.LSAD), props.INITIALS) + ' confirmed cases per 100k'
             : 'Hover over a county');
     }
 
     if (mapColorNum == 1) {
         this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Deaths by County</h5>" +  (props ?
-            '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + getCasesAndDeaths(1, (props.NAME + "_" + props.LSAD)) + ' confirmed deaths'
+            '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + getCasesAndDeaths(1, (props.NAME + "_" + props.LSAD), props.INITIALS) + ' confirmed deaths'
             : 'Hover over a county');
     }
 };
 
 info.update2 = function (props) {
+    document.getElementById("stateSelectMenu").value = props.INITIALS;
+    stateToCounties(props.INITIALS);
     showCountyData(props.ID + props.COUNTY);
+    setTimeout(function(){ document.getElementById("countySelectMenu").value = (props.ID + props.COUNTY); }, 500);
 };
 
 info.addTo(map);
