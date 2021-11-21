@@ -5,7 +5,7 @@ const connection = mysql.createConnection({
     host: '127.0.0.1',
     user: 'root',
     password: '',
-    database: 'countycovid_db'
+    database: 'CovidDB'
 }); 
 
 connection.connect(function(err) {
@@ -18,10 +18,27 @@ class Connector {
         return instance ? instance : new Connector();
     }
 
-    async getData() {
+    async getData_MD() {
         try {
             const response = await new Promise((resolve, reject) => {
-                const query = "SELECT * FROM counties";
+                const query = "SELECT * FROM countiesData_MD";
+                connection.query(query, (err, results) => {
+                    if (err) reject(new Error(err.message));
+                    resolve(results);
+                })
+            });
+
+            return response;
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async getData_MA() {
+        try {
+            const response = await new Promise((resolve, reject) => {
+                const query = "SELECT * FROM countiesData_MA";
                 connection.query(query, (err, results) => {
                     if (err) reject(new Error(err.message));
                     resolve(results);
