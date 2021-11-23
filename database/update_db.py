@@ -110,10 +110,10 @@ while current_date <= end_date:
                 break
         else:
             raise Exception("No death data found for county {} on date {}".format(county_name, current_date))
-    cursor.execute(
-        "INSERT INTO countiesdata_md (state_ID, state_name, state_init, county_ID, county_name, county_infection_rate, county_vaccination_rate, cases, confirmed_deaths, dt)" +
-        "VALUES                      (%s,       %s,         %s,         %s,        %s,          %s,                    %s,                      %s,    %s,               %s)",
-        (24, "Maryland", "MD", county_id, county_name, county_infection_rate, county_vaccination_rate, cases, deaths,
-         current_date))
+        cursor.execute(
+            "INSERT INTO countiesdata_md (state_ID, state_name, state_init, county_ID, county_name, county_infection_rate, county_vaccination_rate, cases, confirmed_deaths, dt)" +
+            "VALUES                      (%s,       %s,         %s,         %s,        %s,          %s,                    %s,                      %s,    %s,               %s)",
+            (24, "Maryland", "MD", county_id, county_name, county_infection_rate, county_vaccination_rate, cases, deaths,
+             current_date))
     current_date += timedelta(1)
 localDatabase.commit()
