@@ -22,7 +22,9 @@ $(document).ready(function() {
 
 var pages = {1:"homePage", 2:"newsPage", 3:"settingsPage", 4:"aboutPage", 5:"helpPage", 6:"privPolPage", 7:"tosPage", 8:"tosPage"};
 var states = [];
-var dates = [];
+var datesArray = [];
+var infRateArray = [];
+var vaccRateArray = [];
 var mapData = "";
 var allPages = document.getElementsByClassName("specialPage");
 var countyName = document.getElementById("countyName");
@@ -107,7 +109,7 @@ function stateToCounties(str) {
         stateName.innerHTML = "State Name or Initials: N/A";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-        vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
+        vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
         countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
         dateOfDataMenu.disabled = true;
         dateOfDataMenu.value = "";
@@ -122,7 +124,7 @@ function stateToCounties(str) {
         countyName.innerHTML = "County Name: N/A";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-        vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
+        vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
         fetch(`http://localhost:3000/getData_${str}`)
@@ -164,10 +166,10 @@ function printCountyName(countyName) {
 
 function populateCountySelectMenu(data) {
     countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
-    dates = [];
+    datesArray = [];
 
-    data.forEach(function ({state_ID, state_name, state_init, county_ID, county_name, dt}) {
-        dates.push(`${dt}`);
+    data.forEach(function ({state_ID, state_name, state_init, county_ID, county_name, county_infection_rate, county_vaccination_rate, dt}) {
+        datesArray.push(`${dt}`.substring(0, 10));
 
         if ($("#countySelectMenu option[value = '" + printFips(`${state_ID}`, `${county_ID}`) + "']").length > 0) {}
 
@@ -178,9 +180,9 @@ function populateCountySelectMenu(data) {
     });
 
     dateOfDataMenu.disabled = false;
-    dateOfDataMenu.min = dates[0].substring(0, 10);
-    dateOfDataMenu.max = dates.at(-1).substring(0, 10);
-    dateOfDataMenu.value = dates.at(-1).substring(0, 10);
+    dateOfDataMenu.min = datesArray[0];
+    dateOfDataMenu.max = datesArray.at(-1);
+    dateOfDataMenu.value = datesArray.at(-1);
 }
 
 function showCountyData(str) {
@@ -188,7 +190,7 @@ function showCountyData(str) {
         countyName.innerHTML = "County Name: N/A";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-        vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
+        vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
         return;
@@ -211,14 +213,14 @@ function resetFunction() {
     stateName.innerHTML = "State Name or Initials: N/A";
     countyFIPSCode.innerHTML = "County FIPS code: N/A";
     infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-    vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
+    vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
     document.getElementById("stateSelectMenu").value = "00";
     countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
     dateOfDataMenu.disabled = true;
     dateOfDataMenu.value = "";
     dateOfDataMenu.min = "";
     dateOfDataMenu.max = "";
-    dates = [];
+    datesArray = [];
     document.getElementById("typeOfMapMenu").value = "0";
     changeMapType("0");
     numOfCasesForCounty.innerHTML = "N/A";
@@ -226,33 +228,29 @@ function resetFunction() {
 }
 
 function loadData(str, data) {
+    infRateArray = [];
+    vaccRateArray = [];
+    var tempDates = [];
+
     data.forEach(function ({state_ID, state_name, state_init, county_ID, county_name, county_infection_rate, county_vaccination_rate, cases, confirmed_deaths, dt}) {
+        if (str == printFips(`${state_ID}`, `${county_ID}`)) {
+            infRateArray.push(`${county_infection_rate}`);
+            vaccRateArray.push(`${county_vaccination_rate}`);
+            tempDates.push(`${dt}`.substring(0, 10));
+        }
+
         if ((str == printFips(`${state_ID}`, `${county_ID}`)) && (dateOfDataMenu.value == (`${dt}`.substring(0, 10)))) {
             countyName.innerHTML = "County Name: " + printCountyName(`${county_name}`);
             stateName.innerHTML = "State Name or Initials: " + `${state_name}` + " (" + `${state_init}` + ")";
             countyFIPSCode.innerHTML = "County FIPS code: " + printFips(`${state_ID}`, `${county_ID}`);
             infectionRateForCounty.innerHTML = "Infection Rate: <b>" + `${county_infection_rate}` + "%</b>";
-            vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>" + `${county_vaccination_rate}` + "%</b>";
+            vaccinationRateForCounty.innerHTML = "Vaccinations: <b>" + `${county_vaccination_rate}` + "&nbsp;</b><i style = 'font-size: 18px;'>fully vaccinated</i>";
+            updateChart(infectionRateChart, infRateArray, tempDates);
+            updateChart(vaccinationRateChart, vaccRateArray, tempDates);
             numOfCasesForCounty.innerHTML = `${cases}`;
             numOfDeathsForCounty.innerHTML = `${confirmed_deaths}`;
         }
     });
-}
-
-function getCasesAndDeaths(typeOfData, countyName) {
-    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/['.]/gi, "");
-
-    if (modifiedCountyName.substr(modifiedCountyName.length - 6) == "County") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 7);
-    }
-
-    if (typeOfData == 0) {
-        return caseData.features.at(-1)["properties"][modifiedCountyName];
-    }
-
-    if (typeOfData == 1) {
-        return deathData.features.at(-1)["properties"][modifiedCountyName];
-    }
 }
 
 function changeMapType(val) {
@@ -283,23 +281,44 @@ function changeMapType(val) {
         INFECTION AND VACCINATION GRAPH CODES             
 ===================================================*/
 
+function updateChart(chart, newDataset, dates) {
+    var plots = [];
+    var dateLabels = [];
+
+    for (var x = 7; x > 0; x--) {
+        if ((newDataset.length - x) < 0 || (dates.length - x) < 0) {
+            plots.push(0);
+            dateLabels.push("Unavailable");
+        }
+
+        else {
+            plots.push(newDataset[newDataset.length - x]);
+            dateLabels.push(dates[dates.length - x]);
+        }
+    }
+
+    chart.data.labels = dateLabels;
+    chart.data.datasets[0].data = plots;
+    chart.update();
+}
+
 var getInfectionRateChart = document.getElementById("infectionRateChart").getContext('2d');
 var infectionRateChart = new Chart(getInfectionRateChart, {
     type: 'line',
     data: {
-        labels: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        labels: ["6 Days Ago", "5 Days Ago", "4 Days Ago", "3 Days Ago", "2 Days Ago", "Yesterday", "Today"],
         datasets: [{
-            label: "Cases",
-            data: [65, 59, 80, 81, 56, 55, 40],
+            label: "Infection Rate",
+            data: [0, 0, 0, 0, 0, 0, 0],
             backgroundColor: ['rgba(253, 53, 63, .2)',],
             borderColor: ['rgba(253, 10, 41, .7)',],
             borderWidth: 2
         }, {
-            label: "State Average Rate",
-            data: [28, 48, 40, 19, 86, 27, 90],
-            backgroundColor: ['rgba(255, 255, 91, .2)',],
-            borderColor: ['rgba(255, 255, 0, .7)',],
-            borderWidth: 2
+            label: "",
+            data: [30, 0, 30, 0, 30, 0, 30],
+            backgroundColor: ['rgba(107, 255, 165, 0)',],
+            borderColor: ['rgba(107, 255, 105, 0)',],
+            borderWidth: 0
         }]
     },
     options: {
@@ -311,19 +330,19 @@ var getVaccinationRateChart = document.getElementById("vaccinationRateChart").ge
 var vaccinationRateChart = new Chart(getVaccinationRateChart, {
     type: 'line',
     data: {
-        labels: ["January", "February", "March", "April", "May", "June", "July"],
+        labels: ["6 Days Ago", "5 Days Ago", "4 Days Ago", "3 Days Ago", "2 Days Ago", "Yesterday", "Today"],
         datasets: [{
-            label: "Cases",
-            data: [65, 59, 80, 81, 56, 55, 40],
+            label: "Vaccinations",
+            data: [0, 0, 0, 0, 0, 0, 0],
             backgroundColor: ['rgba(107, 212, 255, .2)',],
             borderColor: ['rgba(39, 167, 255, .7)',],
             borderWidth: 2
         }, {
-            label: "National Rate",
-            data: [28, 48, 40, 19, 86, 27, 90],
-            backgroundColor: ['rgba(107, 255, 165, .2)',],
-            borderColor: ['rgba(107, 255, 105, .7)',],
-            borderWidth: 2
+            label: "",
+            data: [30, 0, 30, 0, 30, 0, 30],
+            backgroundColor: ['rgba(107, 255, 165, 0)',],
+            borderColor: ['rgba(107, 255, 105, 0)',],
+            borderWidth: 0
         }]
     },
     options: {
@@ -410,6 +429,22 @@ function getColorForDeaths(d) {
            d > 250     ? '#E8608A' :
            d > 100     ? '#EF9198' :
                          '#F8C1A8' ;
+}
+
+function getCasesAndDeaths(typeOfData, countyName, stateInits) {
+    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/['.]/gi, "");
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 6) == "County") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 7);
+    }
+
+    if (typeOfData == 0) {
+        return caseData.features.at(-1)["properties"][modifiedCountyName];
+    }
+
+    if (typeOfData == 1) {
+        return deathData.features.at(-1)["properties"][modifiedCountyName];
+    }
 }
 
 function styleCases(feature) {
