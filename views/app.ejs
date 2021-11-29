@@ -14,8 +14,6 @@
         <script src = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
         <script src = "./LeafletData/us-states.js"></script>
         <script src = "./LeafletData/us-counties.js"></script>
-        <script src = "./LeafletData/md-cases.js"></script>
-        <script src = "./LeafletData/md-deaths.js"></script>
         <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src = "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
         <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
@@ -80,10 +78,6 @@
                                         <b>State:&nbsp;</b>
                                         <select class = "browser-default custom-select select-menu" id = "stateSelectMenu" onchange = "stateToCounties(this.value)">
                                             <option value = "00">Select a State:</option>
-                                            <!--
-                                            <option value = "MD">Maryland</option>
-                                            <option value = "MA">Massachusetts</option>
-                                            -->
                                         </select>
                                     </form>
                                 </div>
@@ -99,16 +93,17 @@
                                     <form style = "white-space: nowrap; width: 50%;">
                                         <b>View:&nbsp;</b>
                                         <select class = "browser-default custom-select select-menu2" id = "typeOfMapMenu" onchange = "changeMapType(this.value)">
-                                            <option value = "0">Cases</option>
-                                            <option value = "1">Deaths</option>
+                                            <option value = "0">Infection Rates</option>
+                                            <option value = "1">Vaccinations</option>
+                                            <option value = "2">Cases</option>
+                                            <option value = "3">Deaths</option>
                                         </select>
                                     </form>
                                 </div>
                                 <div class = "col-xl-3">
                                     <form style = "white-space: nowrap; width: 50%;">
                                         <b>Date of Data:&nbsp;</b>
-                                        <input type = "date" id = "dateOfDataMenu" value = "" min = "" max = "" onchange = "showCountyData(countySelectMenu.value)" required> 
-                                        <!--min = "2020-03-23" max = "2021-11-17"-->
+                                        <input type = "date" id = "dateOfDataMenu" value = "" min = "" max = "" onchange = "changeDateOfData(countySelectMenu.value, this.value)" required> 
                                     </form>
                                 </div>
                                 <div class = "col-xl-2">
@@ -158,7 +153,7 @@
                                         <b>Cases</b><br>
                                     </h3>
                                     <p>
-                                        According to our records, the number of cases per 100,000 is <b id = "casesNum">N/A</b>.<br>
+                                        According to our records, the cumulative number of positive COVID-19 cases in this county is <b id = "casesNum">N/A</b>.<br>
                                         Note that this statistic is up-to-date and verified by our administrators.
                                     </p>
                                 </div>
@@ -172,7 +167,7 @@
                                         <br>
                                     </h3>
                                     <p>
-                                        According to our records, the number of confirmed deaths by COVID-19 is <b id = "deathsNum">N/A</b>.<br>
+                                        According to our records, the number of confirmed deaths by COVID-19 for this county is <b id = "deathsNum">N/A</b>.<br>
                                         Note that this statistic is up-to-date and verified by our administrators.
                                     </p>
                                 </div>
@@ -784,18 +779,17 @@
                     <div class = "col">
                         <div>
                             <br>
-                            <h2 class = "tnrTitle" style = "font-family: Georgia, 'Times New Roman', Times, serif;">
-                                <i>Who Are We?</i>
-                            </h2>
+                            <h4 class = "tnrTitle" style = "font-family: Georgia, 'Times New Roman', Times, serif;">
+                                <i>Last revised November 28, 2021</i>
+                            </h4>
                             <p>
-                                We are a team of students that wanted to make COVID-19 data easily accessible by county population.
+                                This application respects individual privacy by not collecting your information in any shape or form.
+                                We do not even use cookies nor log your IP address.
+                                Any form of data used in this application is all available online, and is just a few browser searches away.
                                 <br>
-                                We created this application, because we were determined to improve the way data is shown to us.
-                                Our determination started at the beginning of September 2021. 
-                                Since then, we have been working hard to create something innovating and effective in a short span of time.
-                                We envisioned a future where there are no obstacles that prevent people from looking up COVID-19 for counties.
-                                <br>
-                                Thanks to the hard work of our team, we’ve managed to successfully create a wonderful project with a simplistic web interface that supports all devices. 
+                                Please note that we may update this privacy policy from time to time. 
+                                We will post changes on this page. We will also keep prior versions of our online privacy policy available 
+                                for your review in this section.
                             </p>
                         </div>
                     </div>
@@ -821,19 +815,21 @@
                     <div class = "col">
                         <div>
                             <br>
-                            <h2 class = "tnrTitle" style = "font-family: Georgia, 'Times New Roman', Times, serif;">
-                                <i>Who Are We?</i>
-                            </h2>
-                            <p>
-                                We are a team of students that wanted to make COVID-19 data easily accessible by county population.
-                                <br>
-                                We created this application, because we were determined to improve the way data is shown to us.
-                                Our determination started at the beginning of September 2021. 
-                                Since then, we have been working hard to create something innovating and effective in a short span of time.
-                                We envisioned a future where there are no obstacles that prevent people from looking up COVID-19 for counties.
-                                <br>
-                                Thanks to the hard work of our team, we’ve managed to successfully create a wonderful project with a simplistic web interface that supports all devices. 
-                            </p>
+                            <ol>
+                                <li>
+                                    This website and its contents herein, including all data, mapping, and analysis are 
+                                    copyright 2021 UMBC, all rights reserved. When linking to the website, attribute the 
+                                    Website as the "COVID-19 Dashboard by Team 4" 
+                                </li>
+                                <li>
+                                    This data set underlying the map, provided on the ArcGis, is licensed under the
+                                    Creative Commons Attribution 4.0 International by UMBC. Copyright UMBC 2021.
+                                    Attribute the data to the "COVID-19 Data Provided by ArcGis" or "COVID-19 ArcGis Data" for short.
+                                </li>
+                                    For publications that use the data, please cite the following publication: 
+                                    "Team 4. An interactive web-based dashboard to track COVID-19 in real time" 
+                                </li>
+                            </ol>
                         </div>
                     </div>
                 </div>
