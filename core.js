@@ -5,6 +5,7 @@ const ejs = require('ejs');
 const app = express(); 
 const port = 3000;
 const connector = require('./connector');
+const url = require("url");
 
 app.use(cors());
 app.use(express.static('public'));
@@ -19,13 +20,8 @@ app.get('', (request, response) => {
 
 const con = connector.getConnectorInstance();
 
-app.get('/getData_MD', (request, response) => {
-    const result = con.getData_MD();
-    result.then(data => response.json({data : data})).catch(err => console.log(err));
-});
-
-app.get('/getData_MA', (request, response) => {
-    const result = con.getData_MA();
+app.get('/getData', (request, response) => {
+    const result = con.getData(url.parse(request.url,true).query["stateInit"]);
     result.then(data => response.json({data : data})).catch(err => console.log(err));
 });
 

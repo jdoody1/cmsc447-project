@@ -19,7 +19,7 @@ $(document).ready(function() {
     states = [...new Map(states.map(item => [JSON.stringify(item), item])).values()];
 
     $.each(states, function(k, v) {
-        fetch(`${URL}${states[k].value}`)
+        fetch(`${URL}?stateInit=${states[k].value}`)
         .then(response => response.json())
         .then(data => {
             var numOfCounties = 0;
@@ -75,7 +75,7 @@ var leafletVaccs = [];
 var leafletCases = [];
 var leafletDeaths = [];
 var mapColorNum = 0;
-const URL = 'http://localhost:3000/getData_';
+const URL = 'http://localhost:3000/getData';
 const pages = {1:"homePage", 2:"newsPage", 3:"settingsPage", 4:"aboutPage", 5:"helpPage", 6:"privPolPage", 7:"tosPage", 8:"tosPage"};
 const allPages = document.getElementsByClassName("specialPage");
 const countyName = document.getElementById("countyName");
@@ -188,7 +188,7 @@ function stateToCounties(str) {
         vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
-        fetch(`${URL}${str}`)
+        fetch(`${URL}?stateInit=${str}`)
         .then(response => response.json())
         .then(data => populateCountySelectMenu(data['data']));
     }
@@ -273,7 +273,7 @@ function showCountyData(str) {
         let x = str.substring(0, 2);
         $.each(states, function(k, v) {
             if (states[k].key == x) {
-                fetch(`${URL}${states[k].value}`)
+                fetch(`${URL}?stateInit=${states[k].value}`)
                 .then(response => response.json())
                 .then(data => loadData(str, data['data']));
             }
@@ -288,7 +288,7 @@ function changeDateOfData(str, newDate) {
     leafletDeaths = [];
 
     $.each(states, function(k, v) {
-        fetch(`${URL}${states[k].value}`)
+        fetch(`${URL}?stateInit=${states[k].value}`)
         .then(response => response.json())
         .then(data => {
             var numOfCounties = 0;
@@ -747,7 +747,6 @@ function getColorForDeaths(d) {
 function getDataForMap(typeOfData, countyName, stateInits) {
     var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/['.]/gi, "");
     var result;
-    
     if (modifiedCountyName.substr(modifiedCountyName.length - 6) == "County") {
         modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 7);
     }

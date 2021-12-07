@@ -18,35 +18,15 @@ class Connector {
         return instance ? instance : new Connector();
     }
 
-    async getData_MD() {
+    async getData(stateInit) {
         try {
-            const response = await new Promise((resolve, reject) => {
-                const query = "SELECT * FROM countiesData_MD";
+            return await new Promise((resolve, reject) => {
+                const query = "SELECT * FROM countiesData WHERE state_init = '" + stateInit + "'";
                 connection.query(query, (err, results) => {
                     if (err) reject(new Error(err.message));
                     resolve(results);
                 })
             });
-
-            return response;
-
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    async getData_MA() {
-        try {
-            const response = await new Promise((resolve, reject) => {
-                const query = "SELECT * FROM countiesData_MA";
-                connection.query(query, (err, results) => {
-                    if (err) reject(new Error(err.message));
-                    resolve(results);
-                })
-            });
-
-            return response;
-
         } catch (error) {
             console.log(error);
         }
