@@ -174,8 +174,8 @@ while True:
                 date_data[fips].county_infection_rate = float(split_inf_line(inf_line)[4].replace("\"", "").replace(",", ""))
         inf_data_index += 1
     for key, val in date_data.items():
-        result = infile.write(("\"{}\","*10+"\n").format(int(val.county_id) // 1000, val.state_name,
-                                                         state_init_dict[val.state_name], int(val.county_id) % 1000,
+        result = infile.write(("\"{}\","*10+"\n").format(val.state_id, val.state_name,
+                                                         state_init_dict[val.state_name], val.county_id,
                                                          val.county_name, val.county_infection_rate,
                                                          val.county_vaccination_rate, val.cases,
                                                          val.confirmed_deaths, val.dt))
