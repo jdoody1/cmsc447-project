@@ -87,6 +87,21 @@ body {
     font-size: 14px;
 }
 
+#dateOfDataMenu {
+    display: inline-block;
+    position: relative;
+    font-style: italic;
+    font-weight: 700;
+    border: 0px solid rgba(108, 117, 125, 0.15);
+    border-radius: 25px;
+    background-color: rgb(156, 156, 156);
+    color: black;
+    font-size: 14px;
+    padding: 7px;
+    width: 100%;
+    padding-left: 10px;
+}
+
 form {
     margin-top: 2px;
 }
@@ -120,7 +135,7 @@ form {
 
 #vaccinationRate {
     font-size: 22px;
-    margin-left: 3%;   
+    margin-left: 3%;
 }
 
 /*****************************
@@ -132,6 +147,7 @@ form {
 #map {
     width: auto;
     height: 811px;
+    z-index: 0;
 }
 
 .info {
@@ -159,6 +175,53 @@ form {
     float: left;
     margin-right: 8px;
     opacity: 0.7;
+}
+
+/*****************************
+
+    LOADER STYLESHEET 
+
+******************************/
+
+#loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #414141; /*#3498db*/
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+    position: absolute;
+    left: 43%;
+    top: 43%;
+    z-index: 1;
+    /*background-color: rgba(108, 117, 125, 0.4); Colors the inner circle of loader*/
+}
+
+#loaderText {
+    text-align: center;
+    font-size: 18px;
+    font-style: italic;
+    font-weight: 600;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: black;
+    position: absolute;
+    left: 40%;
+    top: 5%;
+    z-index: 1;
+    background-color: rgba(207, 207, 207, 0.6);
+    padding: 10px 50px 10px 50px;
+    border-radius: 10px;
+}
+  
+@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+}
+  
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /*****************************
