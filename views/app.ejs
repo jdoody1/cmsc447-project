@@ -12,13 +12,12 @@
         <link rel = "stylesheet" href = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
         <link rel = "stylesheet" href = "https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
         <script src = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-        <script src = "./LeafletData/us-states.js"></script>
-        <script src = "./LeafletData/us-counties.js"></script>
         <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src = "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
         <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
         <script src = "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
         <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+        <script src = "./LeafletData/us-counties.js"></script>
         <link rel = "stylesheet" href = "css/app.css">
     </head>
     <body>
@@ -73,8 +72,17 @@
                     <div style = "margin: 20px;">
                         <div>
                             <div class = "row">
-                                <div class = "col-xl-2">
+                                <!--<div class = "col-xl">
                                     <form style = "white-space: nowrap; width: 50%;">
+                                        <b>Mode:&nbsp;</b>
+                                        <select class = "browser-default custom-select select-menu2" id = "modeOfMapMenu" onchange = "changeMapMode(this.value)">
+                                            <option value = "0">States</option>
+                                            <option value = "1">Counties</option>
+                                        </select>
+                                    </form>
+                                </div>-->
+                                <div class = "col-xl">
+                                    <form style = "white-space: nowrap; width: 70%;">
                                         <b>State:&nbsp;</b>
                                         <select class = "browser-default custom-select select-menu" id = "stateSelectMenu" onchange = "stateToCounties(this.value)">
                                             <option value = "00">Select a State:</option>
@@ -89,25 +97,25 @@
                                         </select>
                                     </form>
                                 </div>
-                                <div class = "col-xl-2">
-                                    <form style = "white-space: nowrap; width: 50%;">
+                                <div class = "col-xl">
+                                    <form style = "white-space: nowrap; width: 60%;">
                                         <b>View:&nbsp;</b>
                                         <select class = "browser-default custom-select select-menu2" id = "typeOfMapMenu" onchange = "changeMapType(this.value)">
                                             <option value = "0">Infection Rates</option>
-                                            <option value = "1">Vaccinations</option>
+                                            <option value = "1">Vaccination Rates</option>
                                             <option value = "2">Cases</option>
                                             <option value = "3">Deaths</option>
                                         </select>
                                     </form>
                                 </div>
-                                <div class = "col-xl-3">
-                                    <form style = "white-space: nowrap; width: 50%;">
+                                <div class = "col-xl-2">
+                                    <form style = "white-space: nowrap; width: 60%;">
                                         <b>Date of Data:&nbsp;</b>
                                         <input type = "date" id = "dateOfDataMenu" value = "" min = "" max = "" onchange = "changeDateOfData(countySelectMenu.value, this.value)" required> 
                                     </form>
                                 </div>
-                                <div class = "col-xl-2">
-                                    <button class = "btn" id = "resetSelectionButton" onclick = "resetFunction()">
+                                <div class = "col-xl">
+                                    <button class = "btn" style = "margin-left: 25%;" id = "resetSelectionButton" onclick = "resetFunction()">
                                         <b>Reset Selection</b>
                                     </button> 
                                 </div>
@@ -119,9 +127,15 @@
             <div>
                 <div class = "container-fluid">
                     <div class = "row">
-                        <div class = "col-xl-8">
+                        <div class = "col-xl-8 justify-content-center">
                             <div class = "whiteBox my-3 rounded shadow-sm" style = "padding: 10px;">
                                 <div id = "map"></div>
+                                <div id = "loader"></div>
+                                <p id = "loaderText">
+                                    Loading Map
+                                    <br>
+                                    Please Wait
+                                </p>
                             </div>
                         </div>
                         <div class = "col-xl-4">
@@ -136,7 +150,7 @@
                                 <i id = "infectionRate">Infection Rate</i>
                                 <canvas id = "infectionRateChart" style = "width:90%; width:90%"></canvas>
                                 <br>
-                                <i id = "vaccinationRate">Vaccinations</i>
+                                <i id = "vaccinationRate">Vaccination Rate</i>
                                 <canvas id = "vaccinationRateChart" style = "width:90%; width:90%"></canvas>
                             </div>
                         </div>
@@ -153,7 +167,8 @@
                                         <b>Cases</b><br>
                                     </h3>
                                     <p>
-                                        According to our records, the cumulative number of positive COVID-19 cases in this county is <b id = "casesNum">N/A</b>.<br>
+                                        According to our records, the cumulative number of positive COVID-19 cases in this county is <b id = "casesNum">N/A</b> for the selected date. 
+                                        <br>
                                         Note that this statistic is up-to-date and verified by our administrators.
                                     </p>
                                 </div>
@@ -167,7 +182,8 @@
                                         <br>
                                     </h3>
                                     <p>
-                                        According to our records, the number of confirmed deaths by COVID-19 for this county is <b id = "deathsNum">N/A</b>.<br>
+                                        According to our records, the number of confirmed deaths by COVID-19 for this county is <b id = "deathsNum">N/A</b> for the selected date.
+                                        <br>
                                         Note that this statistic is up-to-date and verified by our administrators.
                                     </p>
                                 </div>
