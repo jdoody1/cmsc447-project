@@ -713,7 +713,7 @@ function changeMapType(val) {
 
 // For all counties, replace below line with: var map = L.map('map').setView([39.7128,-94.0060], 4.3);
 //For MD only, replace below line with: var map = L.map('map').setView([39, -77.0060], 8);
-var map = L.map('map').setView([39.7128,-94.0060], 4.6);
+var map = L.map('map').setView([39.7128,-94.0060], 4.3);
 var geojson;
 var info = L.control();
 var legendForInfs = L.control({position: 'bottomright'});
