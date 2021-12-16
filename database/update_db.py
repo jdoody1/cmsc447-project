@@ -193,3 +193,4 @@ cursor.execute("LOAD DATA LOCAL INFILE '{}' ".format(realpath(infile.name).repla
                "(state_ID, state_name, state_init, county_ID, county_name, county_infection_rate, "
                "county_vaccination_rate, cases, confirmed_deaths, dt);")
 localDatabase.commit()
+localDatabase.close()
