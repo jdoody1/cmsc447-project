@@ -17,9 +17,17 @@ $(document).ready(function() {
     }
 
     states = [...new Map(states.map(item => [JSON.stringify(item), item])).values()];
+    loadMap();
+    document.getElementById("typeOfMapMenu").value = 2;
+    $(".leaflet-control-zoom").css("visibility", "hidden");
+    document.getElementById("map").style.opacity = "0.4";
+    map._handlers.forEach(function(handler) {
+        handler.disable();
+    });
+    dateOfDataMenu.disabled = true;
 
     $.each(states, function(k, v) {
-        fetch(`${URL}?stateInit=${states[k].value}`)
+        fetch(`${URL}${states[k].value}`)
         .then(response => response.json())
         .then(data => {
             var numOfCounties = 0;
@@ -31,7 +39,7 @@ $(document).ready(function() {
             }
 
             for (var i = 0; i < numOfCounties; i++) {
-                let uniqueID = data['data'].at(data['data'].length - 1 - i)["state_init"] + data['data'].at(data['data'].length - 1 - i)["county_name"];
+                let uniqueID = data['data'].at(data['data'].length - 1 - i)["state_init"] + createUniqueName(data['data'].at(data['data'].length - 1 - i)["county_name"]);
                 let val = data['data'].at(data['data'].length - 1 - i);
 
                 leafletInfs.push({
@@ -56,14 +64,6 @@ $(document).ready(function() {
             }
         });
     });
-    
-    setTimeout(function(){ 
-        loadMap();
-        L.control.layers(baseLayers, null, {position: 'topleft'}).addTo(map);
-        legendForInfs.addTo(map);
-    }, 3000);
-
-    dateOfDataMenu.disabled = true;
 });
 
 var states = [];
@@ -74,8 +74,8 @@ var leafletInfs = [];
 var leafletVaccs = [];
 var leafletCases = [];
 var leafletDeaths = [];
-var mapColorNum = 0;
-const URL = 'http://localhost:3000/getData';
+var mapColorNum = 2;
+const URL = 'http://localhost:3000/getData_';
 const pages = {1:"homePage", 2:"newsPage", 3:"settingsPage", 4:"aboutPage", 5:"helpPage", 6:"privPolPage", 7:"tosPage", 8:"tosPage"};
 const allPages = document.getElementsByClassName("specialPage");
 const countyName = document.getElementById("countyName");
@@ -100,6 +100,29 @@ function revealPage(x) {
         }
     }
 }
+
+const interval = setInterval(function() {
+    if (getDataForMap(2, "Weston", "WY") > 0) {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("loaderText").style.display = "none";
+        $(".leaflet-control-zoom").css("visibility", "visible");
+        document.getElementById("map").style.opacity = "1.0";
+        map._handlers.forEach(function(handler) {
+            handler.enable();
+        });
+        osm.addTo(map);
+        carto.addTo(map);
+        googleStreets.addTo(map);
+        googleSat.addTo(map);
+        watercolor.addTo(map);
+        CartoDB_DarkMatter.addTo(map);
+        L.control.layers(baseLayers, null, {position: 'topleft'}).addTo(map);
+        geojson = L.geoJson(countiesData, { style: styleCases, onEachFeature: onEachFeature }).addTo(map);
+        legendForCases.addTo(map);
+        info.addTo(map);
+        clearInterval(interval);
+    }
+}, 5000);
 
 function showPopUp(x) {
     var popup = document.getElementById(x);
@@ -171,7 +194,7 @@ function stateToCounties(str) {
         stateName.innerHTML = "State Name or Initials: N/A";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-        vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
+        vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
         countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
         dateOfDataMenu.disabled = true;
         dateOfDataMenu.value = "";
@@ -185,10 +208,10 @@ function stateToCounties(str) {
         countyName.innerHTML = "County Name: N/A";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-        vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
+        vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
-        fetch(`${URL}?stateInit=${str}`)
+        fetch(`${URL}${str}`)
         .then(response => response.json())
         .then(data => populateCountySelectMenu(data['data']));
     }
@@ -212,11 +235,34 @@ function printFips(stateID, countyID) {
     }   
 }
 
+function createUniqueName(countyName) {
+    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/['-.]/gi, "");
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 11) == "Census_Area") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 12);
+    }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 16) == "City_and_Borough") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 17);
+    }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 7) == "Borough") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 8);
+    }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 23) == "plus_Lake_and_Peninsula") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 24);
+    }
+
+    return modifiedCountyName;
+}
+
 function printCountyName(countyName) {
     var modifiedCountyName = countyName.replace(/_/g," ");
 
-    if (modifiedCountyName.substr(modifiedCountyName.length - 4) == "City") {
-        return modifiedCountyName;
+    if (modifiedCountyName.substr(modifiedCountyName.length - 4) == "city" || modifiedCountyName.substr(modifiedCountyName.length - 4) == "City") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 5);
+        return modifiedCountyName + " City";
     }
 
     else {
@@ -250,7 +296,7 @@ function showCountyData(str) {
         countyName.innerHTML = "County Name: N/A";
         countyFIPSCode.innerHTML = "County FIPS code: N/A";
         infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-        vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
+        vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
         numOfCasesForCounty.innerHTML = "N/A";
         numOfDeathsForCounty.innerHTML = "N/A";
         return;
@@ -273,7 +319,7 @@ function showCountyData(str) {
         let x = str.substring(0, 2);
         $.each(states, function(k, v) {
             if (states[k].key == x) {
-                fetch(`${URL}?stateInit=${states[k].value}`)
+                fetch(`${URL}${states[k].value}`)
                 .then(response => response.json())
                 .then(data => loadData(str, data['data']));
             }
@@ -282,13 +328,41 @@ function showCountyData(str) {
 }
 
 function changeDateOfData(str, newDate) {
+    fetch(`${URL}${stateSelectMenu.value}`)
+    .then(response => response.json())
+    .then(data => loadData(str, data['data']));
+
+    // Uncomment below if you want to alter the map
+    // everytime the date is changed.
+
+    /* 
     leafletInfs = [];
     leafletVaccs = [];
     leafletCases = [];
     leafletDeaths = [];
+    document.getElementById("loader").style.display = "";
+    document.getElementById("loaderText").style.display = "";
+    $(".leaflet-control-zoom").css("visibility", "hidden");
+    document.getElementById("map").style.opacity = "0.4";
+    map._handlers.forEach(function(handler) {
+        handler.disable();
+    });
+
+    const interval2 = setInterval(function() {
+        if (getDataForMap(2, "Weston", "WY") > 0) {
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("loaderText").style.display = "none";
+            $(".leaflet-control-zoom").css("visibility", "visible");
+            document.getElementById("map").style.opacity = "1.0";
+            map._handlers.forEach(function(handler) {
+                handler.enable();
+            });
+            clearInterval(interval2);
+        }
+    }, 5000);
 
     $.each(states, function(k, v) {
-        fetch(`${URL}?stateInit=${states[k].value}`)
+        fetch(`${URL}${states[k].value}`)
         .then(response => response.json())
         .then(data => {
             var numOfCounties = 0;
@@ -306,7 +380,7 @@ function changeDateOfData(str, newDate) {
             }
 
             for (var i = 0; i < numOfCounties; i++) {
-                let uniqueID = data['data'].at(data['data'].length - counter - i)["state_init"] + data['data'].at(data['data'].length - counter - i)["county_name"];
+                let uniqueID = data['data'].at(data['data'].length - 1 - i)["state_init"] + data['data'].at(data['data'].length - 1 - i)["county_name"].replace(/ /gi, "_").replace(/['.]/gi, "");
                 let val = data['data'].at(data['data'].length - counter - i);
 
                 leafletInfs.push({
@@ -330,13 +404,12 @@ function changeDateOfData(str, newDate) {
                 });
             }
 
-            loadData(str, data['data']);
-
-            setTimeout(function(){
-                loadMap();
-            }, 500);
+            map.removeLayer(geojson);
+            geojson = L.geoJson(countiesData, {style: styleCases, onEachFeature: onEachFeature});
+            map.addLayer(geojson);
         });
     });
+    */
 }
 
 function resetFunction() {
@@ -344,7 +417,7 @@ function resetFunction() {
     stateName.innerHTML = "State Name or Initials: N/A";
     countyFIPSCode.innerHTML = "County FIPS code: N/A";
     infectionRateForCounty.innerHTML = "Infection Rate: <b>N/A</b>";
-    vaccinationRateForCounty.innerHTML = "Vaccinations: <b>N/A</b>";
+    vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>N/A</b>";
     document.getElementById("stateSelectMenu").value = "00";
     countyMenu.innerHTML = "<option value = '00000'>Select a County:</option>";
     dateOfDataMenu.disabled = true;
@@ -352,8 +425,8 @@ function resetFunction() {
     dateOfDataMenu.min = "";
     dateOfDataMenu.max = "";
     datesArray = [];
-    document.getElementById("typeOfMapMenu").value = "0";
-    changeMapType("0");
+    document.getElementById("typeOfMapMenu").value = "2";
+    changeMapType("2");
     updateChart(infectionRateChart, defaultDataset, defaultLabel);
     updateChart(vaccinationRateChart, defaultDataset, defaultLabel);
     numOfCasesForCounty.innerHTML = "N/A";
@@ -376,8 +449,9 @@ function loadData(str, data) {
             countyName.innerHTML = "County Name: " + printCountyName(`${county_name}`);
             stateName.innerHTML = "State Name or Initials: " + `${state_name}` + " (" + `${state_init}` + ")";
             countyFIPSCode.innerHTML = "County FIPS code: " + printFips(`${state_ID}`, `${county_ID}`);
-            infectionRateForCounty.innerHTML = "Infection Rate: <b>" + `${county_infection_rate}` + "%&nbsp;</b><i style = 'font-size: 16px;'>as of <b>" + `${dt}`.substring(0, 10) + "</b></i>";
-            vaccinationRateForCounty.innerHTML = "Vaccinations: <b>" + `${county_vaccination_rate}` + "&nbsp;</b><i style = 'font-size: 16px;'>fully vaccinated</i>";
+            document.getElementById("countySelectMenu").value = (str);
+            infectionRateForCounty.innerHTML = "Infection Rate: <b>" + `${county_infection_rate}` + "&nbsp;</b><i style = 'font-size: 16px;'>per 100k as of <b>" + `${dt}`.substring(0, 10) + "</b></i>";
+            vaccinationRateForCounty.innerHTML = "Vaccination Rate: <b>" + `${county_vaccination_rate}` + "%&nbsp;</b><i style = 'font-size: 16px;'>fully vaccinated</i>";
             updateChart(infectionRateChart, infRateArray, tempDates);
             updateChart(vaccinationRateChart, vaccRateArray, tempDates);
             numOfCasesForCounty.innerHTML = `${cases}`;
@@ -455,7 +529,7 @@ var vaccinationRateChart = new Chart(getVaccinationRateChart, {
     data: {
         labels: defaultLabel,
         datasets: [{
-            label: "Vaccinations",
+            label: "Vaccination Rate",
             data: defaultDataset,
             backgroundColor: ['rgba(107, 212, 255, .2)',],
             borderColor: ['rgba(39, 167, 255, .7)',],
@@ -492,15 +566,8 @@ var vaccinationRateChart = new Chart(getVaccinationRateChart, {
 ===================================================*/
 
 function loadMap() {
-    osm.addTo(map);
-    carto.addTo(map);
-    googleStreets.addTo(map);
-    googleSat.addTo(map);
-    watercolor.addTo(map);
-    CartoDB_DarkMatter.addTo(map);
     L.geoJSON(countiesData).addTo(map);
-    L.geoJson(countiesData, {style: styleInfs}).addTo(map);
-    geojson = L.geoJson(countiesData, { style: styleInfs, onEachFeature: onEachFeature }).addTo(map);
+    L.geoJson(countiesData, {style: styleCases}).addTo(map);
     changeMapType(mapColorNum);
 
     info.onAdd = function (map) {
@@ -512,29 +579,29 @@ function loadMap() {
     info.update = function (props) {
         if (mapColorNum == 0) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Infection Rates by County</h5>" +  (props ?
-                '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(0, (props.NAME + "_" + props.LSAD), props.INITIALS)
-                + '% rate of infection' : 'Hover over a county');
+                '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
+                getDataForMap(0, props.NAME, props.INITIALS)
+                + ' per 100k rate of infection' : 'Hover over a county');
         }
         
         if (mapColorNum == 1) {
-            this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Vaccinations by County</h5>" +  (props ?
-                '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(1, (props.NAME + "_" + props.LSAD), props.INITIALS)
-                + ' confirmed full vaccinations' : 'Hover over a county');
+            this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Vaccination Rates by County</h5>" +  (props ?
+                '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
+                getDataForMap(1, props.NAME, props.INITIALS)
+                + '% rate of vaccination' : 'Hover over a county');
         }
 
         if (mapColorNum == 2) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Cases by County</h5>" +  (props ?
-                '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(2, (props.NAME + "_" + props.LSAD), props.INITIALS)
+                '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
+                getDataForMap(2, props.NAME, props.INITIALS)
                 + ' confirmed positive cases (cumulative)' : 'Hover over a county');
         }
 
         if (mapColorNum == 3) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Deaths by County</h5>" +  (props ?
-                '<b>' + props.NAME + " " + props.LSAD + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(3, (props.NAME + "_" + props.LSAD), props.INITIALS)
+                '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
+                getDataForMap(3, props.NAME, props.INITIALS)
                 + ' confirmed deaths' : 'Hover over a county');
         }
     };
@@ -543,12 +610,7 @@ function loadMap() {
         document.getElementById("stateSelectMenu").value = props.INITIALS;
         stateToCounties(props.INITIALS);
         showCountyData(props.ID + props.COUNTY);
-        setTimeout(function(){
-            document.getElementById("countySelectMenu").value = (props.ID + props.COUNTY);
-        }, 1000); 
     };
-
-    info.addTo(map);
 
     legendForInfs.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
@@ -564,7 +626,7 @@ function loadMap() {
 
     legendForVaccs.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 15000, 30000, 60000, 120000, 240000, 500000, 750000],
+            grades = [0, 11, 22, 33, 44, 55, 66, 77],
             labels = [];
         
         for (var i = 0; i < grades.length; i++) {
@@ -620,7 +682,7 @@ function changeMapType(val) {
             map.removeControl(legendForCases);
             map.removeControl(legendForDeaths);
             geojson = L.geoJson(countiesData, {style: styleVaccs, onEachFeature: onEachFeature});
-            document.getElementById("mapBoxTitle").innerHTML = "<h5 id = 'mapBoxTitle'>COVID Vaccinations by County</h5>";
+            document.getElementById("mapBoxTitle").innerHTML = "<h5 id = 'mapBoxTitle'>COVID Vaccination Rates by County</h5>";
             map.addLayer(geojson);
             legendForVaccs.addTo(map);
             break;
@@ -651,7 +713,7 @@ function changeMapType(val) {
 
 // For all counties, replace below line with: var map = L.map('map').setView([39.7128,-94.0060], 4.3);
 //For MD only, replace below line with: var map = L.map('map').setView([39, -77.0060], 8);
-var map = L.map('map').setView([40.5, -75.0060], 7);
+var map = L.map('map').setView([39.7128,-94.0060], 4.6);
 var geojson;
 var info = L.control();
 var legendForInfs = L.control({position: 'bottomright'});
@@ -712,13 +774,13 @@ function getColorForInfs(d) {
 }
 
 function getColorForVaccs(d) {
-    return d > 750000  ? '#131A55' :
-           d > 500000  ? '#1B277C' :
-           d > 240000  ? '#274B93' :
-           d > 120000  ? '#3371AA' :
-           d > 60000   ? '#3F97C2' :
-           d > 30000   ? '#56B9D2' :
-           d > 15000   ? '#91D0CE' :
+    return d > 77      ? '#131A55' :
+           d > 66      ? '#1B277C' :
+           d > 55      ? '#274B93' :
+           d > 44      ? '#3371AA' :
+           d > 33      ? '#3F97C2' :
+           d > 22      ? '#56B9D2' :
+           d > 11      ? '#91D0CE' :
                          '#CEE6CA' ;
 }
 
@@ -745,11 +807,19 @@ function getColorForDeaths(d) {
 }
     
 function getDataForMap(typeOfData, countyName, stateInits) {
-    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/['.]/gi, "");
+    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/[-'.]/gi, "");
     var result;
+    
+    /*
     if (modifiedCountyName.substr(modifiedCountyName.length - 6) == "County") {
         modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 7);
     }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 4) == "City") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 4);
+        modifiedCountyName = modifiedCountyName + "city";
+    }
+    */
     
     if (typeOfData == 0) {
         $.each(leafletInfs, function(k, v) {
@@ -788,7 +858,7 @@ function getDataForMap(typeOfData, countyName, stateInits) {
     
 function styleInfs(feature) {
     return {
-        fillColor: getColorForInfs(getDataForMap(0, (feature.properties.NAME + "_" + feature.properties.LSAD), feature.properties.INITIALS)),
+        fillColor: getColorForInfs(getDataForMap(0, feature.properties.NAME, feature.properties.INITIALS)),
         weight: 1,
         opacity: 1,
         color: 'black',
@@ -799,7 +869,7 @@ function styleInfs(feature) {
 
 function styleVaccs(feature) {
     return {
-        fillColor: getColorForVaccs(getDataForMap(1, (feature.properties.NAME + "_" + feature.properties.LSAD), feature.properties.INITIALS)),
+        fillColor: getColorForVaccs(getDataForMap(1, feature.properties.NAME, feature.properties.INITIALS)),
         weight: 1,
         opacity: 1,
         color: 'black',
@@ -810,7 +880,7 @@ function styleVaccs(feature) {
 
 function styleCases(feature) {
     return {
-        fillColor: getColorForCases(getDataForMap(2, (feature.properties.NAME + "_" + feature.properties.LSAD), feature.properties.INITIALS)),
+        fillColor: getColorForCases(getDataForMap(2, feature.properties.NAME, feature.properties.INITIALS)),
         weight: 1,
         opacity: 1,
         color: 'black',
@@ -821,7 +891,7 @@ function styleCases(feature) {
 
 function styleDeaths(feature) {
     return {
-        fillColor: getColorForDeaths(getDataForMap(3, (feature.properties.NAME + "_" + feature.properties.LSAD), feature.properties.INITIALS)),
+        fillColor: getColorForDeaths(getDataForMap(3, feature.properties.NAME, feature.properties.INITIALS)),
         weight: 1,
         opacity: 1,
         color: 'black',
