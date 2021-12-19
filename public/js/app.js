@@ -39,7 +39,7 @@ $(document).ready(function() {
             }
 
             for (var i = 0; i < numOfCounties; i++) {
-                let uniqueID = data['data'].at(data['data'].length - 1 - i)["state_init"] + createUniqueName(data['data'].at(data['data'].length - 1 - i)["county_name"]);
+                let uniqueID = printFips(data['data'].at(data['data'].length - 1 - i)["state_ID"], data['data'].at(data['data'].length - 1 - i)["county_ID"]);
                 let val = data['data'].at(data['data'].length - 1 - i);
 
                 leafletInfs.push({
@@ -102,7 +102,7 @@ function revealPage(x) {
 }
 
 const interval = setInterval(function() {
-    if (getDataForMap(2, "Weston", "WY") > 0) {
+    if (getDataForMap(2, 56, 045) > 0) {
         document.getElementById("loader").style.display = "none";
         document.getElementById("loaderText").style.display = "none";
         $(".leaflet-control-zoom").css("visibility", "visible");
@@ -219,20 +219,24 @@ function stateToCounties(str) {
 
 function printFips(stateID, countyID) {
     if (stateID < 10) {
-        stateID = '0' + stateID;
+        stateID = '0'.concat(stateID.toString());
     }
 
     if (countyID < 10) {
-        return stateID + '00' + countyID;
+        countyID = countyID.toString();
+        countyID = "00" + countyID;
+        return stateID.toString().concat(countyID);
     }
 
     else if (countyID > 10 && countyID < 100) {
-        return stateID + '0' + countyID;
+        countyID = countyID.toString();
+        countyID = "0" + countyID;
+        return stateID.toString().concat(countyID);
     }
 
     else if (countyID > 99) {
-        return stateID + countyID;
-    }   
+        return stateID.toString().concat(countyID.toString());
+    } 
 }
 
 function createUniqueName(countyName) {
@@ -259,6 +263,22 @@ function createUniqueName(countyName) {
 
 function printCountyName(countyName) {
     var modifiedCountyName = countyName.replace(/_/g," ");
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 11) == "Census Area") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 12);
+    }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 16) == "City and Borough") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 17);
+    }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 7) == "Borough") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 8);
+    }
+
+    if (modifiedCountyName.substr(modifiedCountyName.length - 23) == "plus Lake and Peninsula") {
+        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 24);
+    }
 
     if (modifiedCountyName.substr(modifiedCountyName.length - 4) == "city" || modifiedCountyName.substr(modifiedCountyName.length - 4) == "City") {
         modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 5);
@@ -347,7 +367,6 @@ function changeDateOfData(str, newDate) {
     map._handlers.forEach(function(handler) {
         handler.disable();
     });
-
     const interval2 = setInterval(function() {
         if (getDataForMap(2, "Weston", "WY") > 0) {
             document.getElementById("loader").style.display = "none";
@@ -360,50 +379,41 @@ function changeDateOfData(str, newDate) {
             clearInterval(interval2);
         }
     }, 5000);
-
     $.each(states, function(k, v) {
         fetch(`${URL}${states[k].value}`)
         .then(response => response.json())
         .then(data => {
             var numOfCounties = 0;
             var counter = 0;
-
             data['data'].slice().reverse().some(function ({dt}) {
                 counter += 1;
                 return newDate === (`${dt}`.substring(0, 10));
             });
-
             for (var i = 0; i < countiesData.features.length; i++) {
                 if (countiesData.features.at(i)["properties"]["INITIALS"] == `${states[k].value}`) {
                     numOfCounties += 1;
                 }
             }
-
             for (var i = 0; i < numOfCounties; i++) {
                 let uniqueID = data['data'].at(data['data'].length - 1 - i)["state_init"] + data['data'].at(data['data'].length - 1 - i)["county_name"].replace(/ /gi, "_").replace(/['.]/gi, "");
                 let val = data['data'].at(data['data'].length - counter - i);
-
                 leafletInfs.push({
                     key:   uniqueID,
                     value: val["county_infection_rate"]
                 });
-
                 leafletVaccs.push({
                     key:   uniqueID,
                     value: val["county_vaccination_rate"]
                 });
-
                 leafletCases.push({
                     key:   uniqueID,
                     value: val["cases"]
                 });
-
                 leafletDeaths.push({
                     key:   uniqueID,
                     value: val["confirmed_deaths"]
                 });
             }
-
             map.removeLayer(geojson);
             geojson = L.geoJson(countiesData, {style: styleCases, onEachFeature: onEachFeature});
             map.addLayer(geojson);
@@ -580,28 +590,28 @@ function loadMap() {
         if (mapColorNum == 0) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Infection Rates by County</h5>" +  (props ?
                 '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(0, props.NAME, props.INITIALS)
+                getDataForMap(0, props.ID, props.COUNTY)
                 + ' per 100k rate of infection' : 'Hover over a county');
         }
         
         if (mapColorNum == 1) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Vaccination Rates by County</h5>" +  (props ?
                 '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(1, props.NAME, props.INITIALS)
+                getDataForMap(1, props.ID, props.COUNTY)
                 + '% rate of vaccination' : 'Hover over a county');
         }
 
         if (mapColorNum == 2) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Cases by County</h5>" +  (props ?
                 '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(2, props.NAME, props.INITIALS)
+                getDataForMap(2, props.ID, props.COUNTY)
                 + ' confirmed positive cases (cumulative)' : 'Hover over a county');
         }
 
         if (mapColorNum == 3) {
             this._div.innerHTML = "<h5 id = 'mapBoxTitle'>COVID Deaths by County</h5>" +  (props ?
                 '<b>' + printCountyName(props.NAME) + '</b><br>'  + props.STATE + ' (' + props.INITIALS + ')<br>' + 
-                getDataForMap(3, props.NAME, props.INITIALS)
+                getDataForMap(3, props.ID, props.COUNTY)
                 + ' confirmed deaths' : 'Hover over a county');
         }
     };
@@ -806,59 +816,26 @@ function getColorForDeaths(d) {
                          '#F8C1A8' ;
 }
     
-function getDataForMap(typeOfData, countyName, stateInits) {
-    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/[-'.]/gi, "");
+function getDataForMap(typeOfData, stateID, countyID) {
     var result;
-    
-    /*
-    if (modifiedCountyName.substr(modifiedCountyName.length - 6) == "County") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 7);
-    }
 
-    if (modifiedCountyName.substr(modifiedCountyName.length - 4) == "City") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 4);
-        modifiedCountyName = modifiedCountyName + "city";
-    }
-    */
-    
-    if (typeOfData == 0) {
-        $.each(leafletInfs, function(k, v) {
-            if (((leafletInfs[k].key).substring(2, leafletInfs[k].key.length) == modifiedCountyName) && ((leafletInfs[k].key).substring(0, 2) == stateInits)) {
-                result = (`${leafletInfs[k].value}`);
+    $.each(leafletCases, function(k, v) {
+        if (leafletCases[k].key == printFips(parseInt(stateID), parseInt(countyID))) {
+            switch (typeOfData) {
+                case 0: result = (`${leafletInfs[k].value}`);   break;
+                case 1: result = (`${leafletVaccs[k].value}`);  break;
+                case 2: result = (`${leafletCases[k].value}`);  break;
+                case 3: result = (`${leafletDeaths[k].value}`); break;
             }
-        });
-    }
-    
-    if (typeOfData == 1) {
-        $.each(leafletVaccs, function(k, v) {
-            if (((leafletVaccs[k].key).substring(2, leafletVaccs[k].key.length) == modifiedCountyName) && ((leafletVaccs[k].key).substring(0, 2) == stateInits)) {
-                result = (`${leafletVaccs[k].value}`);
-            }
-        });
-    }
-
-    if (typeOfData == 2) {
-        $.each(leafletCases, function(k, v) {
-            if (((leafletCases[k].key).substring(2, leafletCases[k].key.length) == modifiedCountyName) && ((leafletCases[k].key).substring(0, 2) == stateInits)) {
-                result = (`${leafletCases[k].value}`);
-            }
-        });
-    }
-
-    if (typeOfData == 3) {
-        $.each(leafletDeaths, function(k, v) {
-            if (((leafletDeaths[k].key).substring(2, leafletDeaths[k].key.length) == modifiedCountyName) && ((leafletDeaths[k].key).substring(0, 2) == stateInits)) {
-                result = (`${leafletDeaths[k].value}`);
-            }
-        });
-    }
+        }
+    });
 
     return result;
 }
     
 function styleInfs(feature) {
     return {
-        fillColor: getColorForInfs(getDataForMap(0, feature.properties.NAME, feature.properties.INITIALS)),
+        fillColor: getColorForInfs(getDataForMap(0, feature.properties.ID, feature.properties.COUNTY)),
         weight: 1,
         opacity: 1,
         color: 'black',
@@ -869,7 +846,7 @@ function styleInfs(feature) {
 
 function styleVaccs(feature) {
     return {
-        fillColor: getColorForVaccs(getDataForMap(1, feature.properties.NAME, feature.properties.INITIALS)),
+        fillColor: getColorForVaccs(getDataForMap(1, feature.properties.ID, feature.properties.COUNTY)),
         weight: 1,
         opacity: 1,
         color: 'black',
@@ -880,7 +857,7 @@ function styleVaccs(feature) {
 
 function styleCases(feature) {
     return {
-        fillColor: getColorForCases(getDataForMap(2, feature.properties.NAME, feature.properties.INITIALS)),
+        fillColor: getColorForCases(getDataForMap(2, feature.properties.ID, feature.properties.COUNTY)),
         weight: 1,
         opacity: 1,
         color: 'black',
@@ -891,7 +868,7 @@ function styleCases(feature) {
 
 function styleDeaths(feature) {
     return {
-        fillColor: getColorForDeaths(getDataForMap(3, feature.properties.NAME, feature.properties.INITIALS)),
+        fillColor: getColorForDeaths(getDataForMap(3, feature.properties.ID, feature.properties.COUNTY)),
         weight: 1,
         opacity: 1,
         color: 'black',
