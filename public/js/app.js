@@ -89,7 +89,7 @@ const vaccinationRateForCounty = document.getElementById("vaccinationRate");
 const numOfCasesForCounty = document.getElementById("casesNum");
 const numOfDeathsForCounty = document.getElementById("deathsNum");
 const defaultDataset = [0, 0, 0, 0, 0, 0, 0];
-const defaultLabel = ["6 Days Ago", "5 Days Ago", "4 Days Ago", "3 Days Ago", "2 Days Ago", "Yesterday", "Today"];
+const defaultLabel = ["N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"];
 
 function revealPage(x) {
     for (var i = 0; i < allPages.length; i++) {
