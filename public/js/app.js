@@ -239,28 +239,6 @@ function printFips(stateID, countyID) {
     } 
 }
 
-function createUniqueName(countyName) {
-    var modifiedCountyName = countyName.replace(/ /gi, "_").replace(/['-.]/gi, "");
-
-    if (modifiedCountyName.substr(modifiedCountyName.length - 11) == "Census_Area") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 12);
-    }
-
-    if (modifiedCountyName.substr(modifiedCountyName.length - 16) == "City_and_Borough") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 17);
-    }
-
-    if (modifiedCountyName.substr(modifiedCountyName.length - 7) == "Borough") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 8);
-    }
-
-    if (modifiedCountyName.substr(modifiedCountyName.length - 23) == "plus_Lake_and_Peninsula") {
-        modifiedCountyName = modifiedCountyName.substring(0, modifiedCountyName.length - 24);
-    }
-
-    return modifiedCountyName;
-}
-
 function printCountyName(countyName) {
     var modifiedCountyName = countyName.replace(/_/g," ");
 
@@ -347,79 +325,10 @@ function showCountyData(str) {
     }
 }
 
-function changeDateOfData(str, newDate) {
+function changeDateOfData(str) {
     fetch(`${URL}${stateSelectMenu.value}`)
     .then(response => response.json())
     .then(data => loadData(str, data['data']));
-
-    // Uncomment below if you want to alter the map
-    // everytime the date is changed.
-
-    /* 
-    leafletInfs = [];
-    leafletVaccs = [];
-    leafletCases = [];
-    leafletDeaths = [];
-    document.getElementById("loader").style.display = "";
-    document.getElementById("loaderText").style.display = "";
-    $(".leaflet-control-zoom").css("visibility", "hidden");
-    document.getElementById("map").style.opacity = "0.4";
-    map._handlers.forEach(function(handler) {
-        handler.disable();
-    });
-    const interval2 = setInterval(function() {
-        if (getDataForMap(2, "Weston", "WY") > 0) {
-            document.getElementById("loader").style.display = "none";
-            document.getElementById("loaderText").style.display = "none";
-            $(".leaflet-control-zoom").css("visibility", "visible");
-            document.getElementById("map").style.opacity = "1.0";
-            map._handlers.forEach(function(handler) {
-                handler.enable();
-            });
-            clearInterval(interval2);
-        }
-    }, 5000);
-    $.each(states, function(k, v) {
-        fetch(`${URL}${states[k].value}`)
-        .then(response => response.json())
-        .then(data => {
-            var numOfCounties = 0;
-            var counter = 0;
-            data['data'].slice().reverse().some(function ({dt}) {
-                counter += 1;
-                return newDate === (`${dt}`.substring(0, 10));
-            });
-            for (var i = 0; i < countiesData.features.length; i++) {
-                if (countiesData.features.at(i)["properties"]["INITIALS"] == `${states[k].value}`) {
-                    numOfCounties += 1;
-                }
-            }
-            for (var i = 0; i < numOfCounties; i++) {
-                let uniqueID = data['data'].at(data['data'].length - 1 - i)["state_init"] + data['data'].at(data['data'].length - 1 - i)["county_name"].replace(/ /gi, "_").replace(/['.]/gi, "");
-                let val = data['data'].at(data['data'].length - counter - i);
-                leafletInfs.push({
-                    key:   uniqueID,
-                    value: val["county_infection_rate"]
-                });
-                leafletVaccs.push({
-                    key:   uniqueID,
-                    value: val["county_vaccination_rate"]
-                });
-                leafletCases.push({
-                    key:   uniqueID,
-                    value: val["cases"]
-                });
-                leafletDeaths.push({
-                    key:   uniqueID,
-                    value: val["confirmed_deaths"]
-                });
-            }
-            map.removeLayer(geojson);
-            geojson = L.geoJson(countiesData, {style: styleCases, onEachFeature: onEachFeature});
-            map.addLayer(geojson);
-        });
-    });
-    */
 }
 
 function resetFunction() {
@@ -624,8 +533,7 @@ function loadMap() {
 
     legendForInfs.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 9, 18, 27, 36, 45, 54, 63],
-            labels = [];
+            grades = [0, 9, 18, 27, 36, 45, 54, 63];
         
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML += '<i style = "background:' + getColorForInfs(grades[i] + 1) + '"></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
@@ -636,8 +544,7 @@ function loadMap() {
 
     legendForVaccs.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 11, 22, 33, 44, 55, 66, 77],
-            labels = [];
+            grades = [0, 11, 22, 33, 44, 55, 66, 77];
         
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML += '<i style = "background:' + getColorForVaccs(grades[i] + 1) + '"></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
@@ -648,8 +555,7 @@ function loadMap() {
 
     legendForCases.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 5000, 7000, 10000, 12000, 15000, 20000, 30000],
-            labels = [];
+            grades = [0, 5000, 7000, 10000, 12000, 15000, 20000, 30000];
         
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML += '<i style = "background:' + getColorForCases(grades[i] + 1) + '"></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
@@ -660,8 +566,7 @@ function loadMap() {
         
     legendForDeaths.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 100, 250, 500, 800, 1200, 1500, 1800],
-            labels = [];
+            grades = [0, 100, 250, 500, 800, 1200, 1500, 1800];
     
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML += '<i style = "background:' + getColorForDeaths(grades[i] + 1) + '"></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
@@ -721,8 +626,6 @@ function changeMapType(val) {
     }
 }
 
-// For all counties, replace below line with: var map = L.map('map').setView([39.7128,-94.0060], 4.3);
-//For MD only, replace below line with: var map = L.map('map').setView([39, -77.0060], 8);
 var map = L.map('map').setView([39.7128,-94.0060], 4.3);
 var geojson;
 var info = L.control();
